@@ -10,6 +10,7 @@ async fn main() {
     dotenvy::dotenv().unwrap();
     let token = std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN");
     let cmd_prefix = std::env::var("COMMAND_PREFIX").expect("missing COMMAND_PREFIX");
+    let _bot_owner_id = std::env::var("BOT_OWNER_ID").expect("missing BOT_OWNER_ID");
     let intents = serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
 
     let framework = poise::Framework::builder()
