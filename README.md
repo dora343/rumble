@@ -1,3 +1,7 @@
 # Rumble
 
-what is this?
+A discord bot.
+
+Just a bot.
+
+
