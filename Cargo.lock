@@ -1240,6 +1240,7 @@ dependencies = [
  "poise",
  "serenity",
  "tokio",
+ "tracing",
 ]
 
 [[package]]

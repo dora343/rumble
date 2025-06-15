@@ -8,13 +8,14 @@ pub async fn event_handler(
     ctx: &serenity::Context,
     event: &serenity::FullEvent,
     _framework: poise::FrameworkContext<'_, Data, Error>,
+    data: &Data
 ) -> Result<(), Error> {
     match event {
         serenity::FullEvent::Ready { data_about_bot, .. } => {
             println!("Logged in as {}", data_about_bot.user.name);
         }
         serenity::FullEvent::Message { new_message } => {
-            message_handler(ctx, new_message).await?;
+            message_handler(ctx, data, new_message).await?;
         }
         _ => {}
     }
