@@ -9,7 +9,7 @@ pub async fn respond_get_pinged(ctx: &serenity::Context, msg: &Message) -> Resul
         msg.reply_ping(ctx, reaction).await?;
         return Ok(());
     }
-    
+
     let reaction: String = "ping乜撚嘢呀木臭".into();
     println!("{}", reaction);
     msg.channel_id.say(ctx, reaction).await?;

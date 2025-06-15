@@ -14,18 +14,19 @@ async fn main() {
     let token = std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN");
     let cmd_prefix = std::env::var("COMMAND_PREFIX").expect("missing COMMAND_PREFIX");
     let _bot_owner_id = std::env::var("BOT_OWNER_ID").expect("missing BOT_OWNER_ID");
-    
+
     let database_url = std::env::var("DATABASE_URL").expect("missing DATABASE_URL");
-    
+
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(&database_url)
         .await
         .unwrap();
-        
+
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
-    
-    let intents = serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
+
+    let intents =
+        serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
@@ -49,9 +50,7 @@ async fn main() {
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data { 
-                    dbpool: pool,
-                })
+                Ok(Data { dbpool: pool })
             })
         })
         .build();

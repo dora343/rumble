@@ -1,7 +1,6 @@
 pub mod handle_gamble;
 pub mod handle_register;
 
-
 const DEFAULT_TOKENS: i64 = 10000;
 const DEFAULT_RATE: i16 = 5000; // 50%
 const DEFAULT_CRIT_RATE: i16 = 0; // 50%

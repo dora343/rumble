@@ -1,7 +1,7 @@
 pub mod age;
-pub mod recursion_test;
-pub mod help;
 pub mod gamble;
+pub mod help;
+pub mod recursion_test;
 pub mod register;
 
 use crate::Data;
