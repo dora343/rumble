@@ -24,11 +24,11 @@ pub async fn message_handler(
     let ping_bot = MessageBuilder::new()
         .mention(&ctx.cache.current_user().id)
         .build();
-    
+
     match msg {
         msg if msg.content.eq("dora") => respond_ping_dora(ctx, msg).await,
         msg if msg.content.contains("hello") => respond_hello(ctx, msg).await,
         msg if msg.content.contains(&ping_bot) => respond_get_pinged(ctx, msg).await,
-        _ => Ok(())
+        _ => Ok(()),
     }
 }
