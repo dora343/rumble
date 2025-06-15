@@ -5,8 +5,6 @@ mod event_handler;
 mod minigame;
 
 struct Data {
-    cmd_prefix: String,
-    bot_owner_id: String,
     dbpool: sqlx::PgPool,
 } // User data, which is stored and accessible in all command invocations
 
@@ -15,7 +13,7 @@ async fn main() {
     dotenvy::dotenv().unwrap();
     let token = std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN");
     let cmd_prefix = std::env::var("COMMAND_PREFIX").expect("missing COMMAND_PREFIX");
-    let bot_owner_id = std::env::var("BOT_OWNER_ID").expect("missing BOT_OWNER_ID");
+    let _bot_owner_id = std::env::var("BOT_OWNER_ID").expect("missing BOT_OWNER_ID");
     
     let database_url = std::env::var("DATABASE_URL").expect("missing DATABASE_URL");
     
@@ -52,8 +50,6 @@ async fn main() {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 Ok(Data { 
-                    cmd_prefix, 
-                    bot_owner_id, 
                     dbpool: pool,
                 })
             })

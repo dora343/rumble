@@ -14,7 +14,7 @@ type Error = Box<dyn std::error::Error + Send + Sync>;
 
 pub async fn message_handler(
     ctx: &serenity::Context,
-    data: &Data,
+    _data: &Data,
     msg: &Message,
 ) -> Result<(), Error> {
     if msg.author.id == ctx.cache.current_user().id {
