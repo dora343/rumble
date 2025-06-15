@@ -1,5 +1,5 @@
 use poise::serenity_prelude as serenity;
-
+use sqlx::postgres::PgPoolOptions;
 mod cmd;
 mod event_handler;
 mod minigame;
@@ -7,6 +7,7 @@ mod minigame;
 struct Data {
     cmd_prefix: String,
     bot_owner_id: String,
+    dbpool: sqlx::PgPool,
 } // User data, which is stored and accessible in all command invocations
 
 #[tokio::main]
@@ -15,6 +16,17 @@ async fn main() {
     let token = std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN");
     let cmd_prefix = std::env::var("COMMAND_PREFIX").expect("missing COMMAND_PREFIX");
     let bot_owner_id = std::env::var("BOT_OWNER_ID").expect("missing BOT_OWNER_ID");
+    
+    let database_url = std::env::var("DATABASE_URL").expect("missing DATABASE_URL");
+    
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url)
+        .await
+        .unwrap();
+        
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+    
     let intents = serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
 
     let framework = poise::Framework::builder()
@@ -28,6 +40,7 @@ async fn main() {
                 cmd::age::age(),
                 cmd::recursion_test::recursion_test(),
                 cmd::help::help(),
+                cmd::register::register(),
                 cmd::gamble::gamble(),
             ],
             event_handler: |ctx, event, framework, data| {
@@ -41,6 +54,7 @@ async fn main() {
                 Ok(Data { 
                     cmd_prefix, 
                     bot_owner_id, 
+                    dbpool: pool,
                 })
             })
         })

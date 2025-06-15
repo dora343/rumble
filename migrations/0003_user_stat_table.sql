@@ -1,0 +1,20 @@
+create table if not exists gamble.user_stat (
+	id BIGINT primary key references gamble.users(id),
+	play_count INTEGER default 0,
+	success_count INTEGER default 0,
+	fail_count INTEGER default 0,
+	revive_count INTEGER default 0,
+	max_tokens BIGINT default 0,
+	max_bet BIGINT default 0,
+	max_success_bet BIGINT default 0,
+	max_fail_bet BIGINT default 0,
+	max_successive_success INTEGER default 0,
+	max_successive_fail INTEGER default 0,
+	min_rate smallint default 5000,
+	max_rate smallint default 5000,
+	min_crit_rate smallint default 0,
+	max_crit_rate smallint default 0,
+	min_crit_mul INTEGER default 10000,
+	max_crit_mul INTEGER default 10000,
+	user_creation_date TIMESTAMP default Now()
+);

@@ -1,6 +1,5 @@
 services:
-  discordbot:
-    image: rumble-discordbot:latest
+  bot:
     build:
       context: .
       dockerfile: Dockerfile

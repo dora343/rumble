@@ -8,6 +8,6 @@ pub async fn age(ctx: Context<'_>) -> Result<(), Error> {
     let u = ctx.author();
     let response = format!("{}'s account was created at {}", u.name, u.created_at());
     println!("{}", response);
-    ctx.say(response).await?;
+    ctx.reply(response).await?;
     Ok(())
 }

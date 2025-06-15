@@ -5,7 +5,7 @@ use crate::minigame::gamble::handle_gamble::handle_gamble;
 /// Displays the author's account creation date
 #[poise::command(prefix_command, aliases("g"), help_text_fn = "help_gamble")]
 pub async fn gamble(ctx: Context<'_>, bet: String) -> Result<(), Error> {
-    let msg = handle_gamble(ctx.author().id, bet).await;
+    let msg = handle_gamble(ctx.data(), ctx.author().id, bet).await?;
     ctx.reply(msg).await?;
     Ok(())
 }
