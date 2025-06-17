@@ -1,3 +1,4 @@
+pub mod core;
 pub mod handle_gamble;
 pub mod handle_register;
 
@@ -8,13 +9,28 @@ const DEFAULT_CRIT_MUL: i32 = 10000; // 100%
 const DEFAULT_REVIVE_TOKENS: i32 = 10000; // 100%
 const DEFAULT_AUTO_REVIVE: bool = false;
 
+const MAX_RATE: i16 = 10000;
+const MULTIPLIER_BASE: f64 = 10000.0;
+
 #[derive(sqlx::FromRow, Debug, PartialEq, Eq, Clone)]
-struct User {
+pub struct User {
     id: i64,
     tokens: i64,
+    play_count: i32,
     rate: i16,
     crit_rate: i16,
     crit_mul: i32,
     revive_tokens: i64,
     auto_revive: bool,
+    success_count: i32,
+    fail_count: i32,
+    successive_success: i32,
+    successive_fail: i32,
+    revive_count: i32,
+    max_tokens: i64,
+    max_bet: i64,
+    max_success_bet: i64,
+    max_fail_bet: i64,
+    max_successive_success: i32,
+    max_successive_fail: i32,
 }

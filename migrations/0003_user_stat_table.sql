@@ -4,6 +4,8 @@ create table if not exists gamble.user_stat (
 	success_count INTEGER default 0,
 	fail_count INTEGER default 0,
 	revive_count INTEGER default 0,
+	successive_success INTEGER default 0,
+	successive_fail INTEGER default 0,
 	max_tokens BIGINT default 0,
 	max_bet BIGINT default 0,
 	max_success_bet BIGINT default 0,

@@ -22,7 +22,7 @@ pub async fn handle_register(data: &Data, user_id: UserId) -> Result<String, sql
     match res {
         Some(_) => Ok(String::from("You are already registered.")),
         None => {
-            println!("Inserting new player {} into gamble.users...", user_id);
+            println!("Inserting new player {} into gamble.users", user_id);
             let res = sqlx::query(
                 r#"
                 insert into gamble.users (id, tokens, rate, crit_rate, crit_mul, revive_tokens, auto_revive)
@@ -41,7 +41,7 @@ pub async fn handle_register(data: &Data, user_id: UserId) -> Result<String, sql
 
             println!("Affected rows: {}", res.rows_affected());
 
-            println!("Inserting new player {} into gamble.user_stat...", user_id);
+            println!("Inserting new player {} into gamble.user_stat", user_id);
             let res = sqlx::query(
                 r#"
                 insert into gamble.user_stat (id, max_tokens)
