@@ -47,7 +47,7 @@ pub async fn handle_gamble(
     if let None = res {
         return Ok(MessageBuilder::new()
             .push("You are not registered.\n")
-            .push("To register, use `.register`")
+            .push("Use `.register` to get registered.")
             .build());
     }
 
@@ -102,7 +102,7 @@ pub async fn handle_gamble(
                             .build(),
                         false => {
                             let revive_notice = match result.tokens_after == 0 {
-                                true => "\n Use .revive to start again.",
+                                true => "\nUse `.revive` to start again.",
                                 false => "",
                             };
 
@@ -115,8 +115,6 @@ pub async fn handle_gamble(
                                 .build()
                         }
                     })
-
-                    // Ok(String::from("wip"))
                 }
             }
         }

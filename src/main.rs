@@ -41,6 +41,7 @@ async fn main() {
                 cmd::help::help(),
                 cmd::register::register(),
                 cmd::gamble::gamble(),
+                cmd::revive::revive(),
             ],
             event_handler: |ctx, event, framework, data| {
                 Box::pin(event_handler::event_handler(ctx, event, framework, data))
