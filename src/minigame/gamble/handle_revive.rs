@@ -68,7 +68,8 @@ pub async fn handle_revive(data: &Data, user_id: UserId) -> Result<String, sqlx:
 
                 println!("Affected rows: {}", res.rows_affected());
                 MessageBuilder::new()
-                    .push("You revived.\n")
+                    .push("You")
+                    .push_bold_line(" revived.")
                     .push(format!("You have {} tokens.", revive_info.revive_tokens))
                     .build()
             }

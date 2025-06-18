@@ -3,6 +3,7 @@ use serenity::all::UserId;
 use serenity::utils::MessageBuilder;
 
 use crate::Data;
+use crate::minigame::gamble::handle_revive::handle_revive;
 use crate::minigame::gamble::{self, core};
 
 pub async fn handle_gamble(
@@ -10,8 +11,6 @@ pub async fn handle_gamble(
     user_id: UserId,
     bet: String,
 ) -> Result<String, sqlx::Error> {
-    // Err(GambleError::UserNotRegistered)
-    // Ok("".into())
     let res: Option<gamble::User> = sqlx::query_as(
         r#"
         select 
@@ -85,7 +84,7 @@ pub async fn handle_gamble(
                 }
 
                 _ => {
-                    let result = core::gamble(user, bet)
+                    let result = core::gamble(user.clone(), bet)
                         .update_user(&data.dbpool)
                         .await?
                         .insert_record(&data.dbpool)
@@ -100,24 +99,94 @@ pub async fn handle_gamble(
                             .push("have been added to your profile.\n")
                             .push(format!("You have {} tokens.", result.tokens_after))
                             .build(),
-                        false => {
-                            let revive_notice = match result.tokens_after == 0 {
-                                true => "\nUse `.revive` to start again.",
-                                false => "",
-                            };
+                        false => match result.tokens_after == 0 {
+                            true => {
+                                let fail_msg = MessageBuilder::new()
+                                    .push("Unlucky! ")
+                                    .push_bold(format!("{} tokens ", result.differential.abs()))
+                                    .push("have been taken from your profile.\n")
+                                    .build();
 
-                            MessageBuilder::new()
+                                match user.auto_revive {
+                                    true => {
+                                        let revive = handle_revive(data, user_id).await?;
+
+                                        MessageBuilder::new()
+                                            .push(fail_msg)
+                                            .push_italic_line("Auto Revive activated.")
+                                            .push(revive)
+                                            .build()
+                                    }
+                                    false => MessageBuilder::new()
+                                        .push(fail_msg)
+                                        .push("Use `.revive` to start again.")
+                                        .build(),
+                                }
+                            }
+                            false => MessageBuilder::new()
                                 .push("Unlucky! ")
                                 .push_bold(format!("{} tokens ", result.differential.abs()))
                                 .push("have been taken from your profile.\n")
                                 .push(format!("You have {} tokens.", result.tokens_after))
-                                .push(revive_notice)
-                                .build()
-                        }
+                                .build(),
+                        },
                     })
                 }
             }
         }
         Err(_) => Ok(String::from("err: cant parse")),
+    }
+}
+
+#[derive(sqlx::FromRow, Debug)]
+struct AutoReviveInfo {
+    id: i64,
+    auto_revive: bool,
+}
+
+pub async fn handle_autorevive(data: &Data, user_id: UserId) -> Result<String, sqlx::Error> {
+    let res: Option<AutoReviveInfo> = sqlx::query_as(
+        r#"
+        select 
+            id,
+            auto_revive
+        from gamble.users
+        where id = $1;
+        "#,
+    )
+    .bind(user_id.get() as i64)
+    .fetch_optional(&data.dbpool)
+    .await?;
+
+    match res {
+        Some(auto_revive_info) => {
+            println!("Updating user {:?} in gamble.users", auto_revive_info.id);
+            let res = sqlx::query(
+                r#"
+                update gamble.users
+                set 
+                    auto_revive = $1
+                where id = $2
+                "#,
+            )
+            .bind(!auto_revive_info.auto_revive)
+            .bind(auto_revive_info.id)
+            .execute(&data.dbpool)
+            .await?;
+            println!("Affected rows: {}", res.rows_affected());
+
+            let on_off = match auto_revive_info.auto_revive {
+                true => "off",
+                false => "on",
+            };
+
+            Ok(MessageBuilder::new()
+                .push(format!("Auto revive switched {on_off}."))
+                .build())
+        }
+        None => Ok(MessageBuilder::new()
+            .push("You are not registered.\n")
+            .push("Use `.register` to get registered.")
+            .build()),
     }
 }
