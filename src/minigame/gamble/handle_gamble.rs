@@ -1,5 +1,3 @@
-use std::i32::MAX;
-
 use serenity::all::UserId;
 
 use serenity::utils::MessageBuilder;

@@ -1,5 +1,3 @@
-use serenity::all::Timestamp;
-
 use crate::cmd::Context;
 use crate::cmd::Error;
 use crate::minigame::gamble::handle_gamble::handle_autorevive;

@@ -1,6 +1,3 @@
-use serenity::all::UserId;
-
-use crate::Data;
 use crate::cmd::{Context, Error};
 use crate::minigame::gamble::{
     DEFAULT_AUTO_REVIVE, DEFAULT_CRIT_MUL, DEFAULT_CRIT_RATE, DEFAULT_RATE, DEFAULT_REVIVE_TOKENS,
