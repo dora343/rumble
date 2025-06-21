@@ -120,7 +120,7 @@ pub fn gamble(user: User, bet: i64) -> GambleResult {
 
     let gamble_check: i16 = rng.random_range(1..(MAX_RATE as i16));
 
-    let crit_success = crit_check >= user.crit_rate;
+    let crit_success = user.crit_rate >= crit_check;
     let gamble_success = gamble_check >= user.rate;
 
     let play_count = user.play_count + 1;
