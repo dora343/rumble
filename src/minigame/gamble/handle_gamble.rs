@@ -105,7 +105,7 @@ pub async fn handle_gamble(
                                     .push("Unlucky! ")
                                     .push_bold(format!("{} tokens ", result.differential.abs()))
                                     .push("have been taken from your profile.\n")
-                                    .push(format!("You have {} tokens.", result.tokens_after))
+                                    .push_line(format!("You have {} tokens.", result.tokens_after))
                                     .build();
 
                                 match user.auto_revive {
