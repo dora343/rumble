@@ -37,7 +37,7 @@ pub async fn autorevive(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-#[poise::command(prefix_command)]
+#[poise::command(prefix_command, aliases("lb"))]
 pub async fn leaderboard(ctx: Context<'_>) -> Result<(), Error> {
     let msg = handle_leaderboard(ctx).await?;
     ctx.reply(msg).await?;
