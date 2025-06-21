@@ -6,7 +6,7 @@ services:
     environment:
       DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD}@db:5432"
     ports:
-      - "3000:3000"
+      - "5699:5699"
     depends_on:
       - db
   db:
