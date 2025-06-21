@@ -1,10 +1,14 @@
+use std::i32::MAX;
+
 use serenity::all::UserId;
 
 use serenity::utils::MessageBuilder;
+use unicode_width::UnicodeWidthStr;
 
 use crate::Data;
+use crate::cmd::Context;
 use crate::minigame::gamble::handle_revive::handle_revive;
-use crate::minigame::gamble::{self, core};
+use crate::minigame::gamble::{self, AutoReviveInfo, LeaderboardProfile, core};
 
 pub async fn handle_gamble(
     data: &Data,
@@ -139,12 +143,6 @@ pub async fn handle_gamble(
     }
 }
 
-#[derive(sqlx::FromRow, Debug)]
-struct AutoReviveInfo {
-    id: i64,
-    auto_revive: bool,
-}
-
 pub async fn handle_autorevive(data: &Data, user_id: UserId) -> Result<String, sqlx::Error> {
     let res: Option<AutoReviveInfo> = sqlx::query_as(
         r#"
@@ -190,4 +188,99 @@ pub async fn handle_autorevive(data: &Data, user_id: UserId) -> Result<String, s
             .push("Use `.register` to get registered.")
             .build()),
     }
+}
+
+pub async fn handle_leaderboard(ctx: Context<'_>) -> Result<String, crate::cmd::Error> {
+    let res: Vec<LeaderboardProfile> = sqlx::query_as(
+        r#"
+        select 
+            id,
+            name,
+            tokens
+        from gamble.users
+        order by tokens desc;
+        "#,
+    )
+    .fetch_all(&ctx.data().dbpool)
+    .await?;
+
+    if res.is_empty() {
+        return Ok("No one has registered.".into());
+    }
+
+    let max_name_len = std::cmp::max(6, res.iter().map(|x| x.name.len()).max().unwrap());
+    let mut msg: String = String::from("Rank\tPlayer");
+
+    let title_indent_before_tokens = 4 + (max_name_len - 6);
+    for _ in 0..title_indent_before_tokens {
+        msg.push(' ');
+    }
+    msg.push_str("Tokens\n");
+
+    for (index, player_profile) in res.iter().enumerate() {
+        if player_profile.name == "DEFAULT_PLACE_HOLDER" {
+            let user_id = UserId::from(player_profile.id as u64);
+
+            // huge bottleneck here
+            let username = user_id.to_user(ctx).await?.name;
+
+            let _ = sqlx::query(
+                r#"
+                update gamble.users
+                set 
+                    name = $1
+                where id = $2
+                "#,
+            )
+            .bind(&username)
+            .bind(player_profile.id)
+            .execute(&ctx.data().dbpool)
+            .await?;
+
+            let indent_before_tokens: usize = 4 + (max_name_len - username.width_cjk());
+
+            let mut indent = String::from("");
+
+            for _ in 0..indent_before_tokens {
+                indent.push(' ');
+            }
+
+            msg.push_str(
+                &MessageBuilder::new()
+                    .push_line(format!(
+                        "{}\t   {}{}{}",
+                        index + 1,
+                        username,
+                        indent,
+                        player_profile.tokens
+                    ))
+                    .build(),
+            );
+        } else {
+            let indent_before_tokens: usize = 4 + (max_name_len - player_profile.name.width_cjk());
+
+            let mut indent = String::from("");
+
+            for _ in 0..indent_before_tokens {
+                indent.push(' ');
+            }
+
+            msg.push_str(
+                &MessageBuilder::new()
+                    .push_line(format!(
+                        "{}\t   {}{}{}",
+                        index + 1,
+                        player_profile.name,
+                        indent,
+                        player_profile.tokens
+                    ))
+                    .build(),
+            );
+        }
+    }
+
+    Ok(MessageBuilder::new()
+        .push_line("# Leaderboard")
+        .push_codeblock(msg, Some("rust"))
+        .build())
 }

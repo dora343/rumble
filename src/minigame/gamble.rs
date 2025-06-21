@@ -35,3 +35,16 @@ pub struct User {
     max_successive_success: i32,
     max_successive_fail: i32,
 }
+
+#[derive(sqlx::FromRow, Debug)]
+struct AutoReviveInfo {
+    id: i64,
+    auto_revive: bool,
+}
+
+#[derive(sqlx::FromRow, Debug)]
+struct LeaderboardProfile {
+    id: i64,
+    name: String,
+    tokens: i64,
+}

@@ -11,3 +11,4 @@ serenity = "0.12"
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "postgres", "migrate", "time", "macros"] }
 tokio = { version = "1.21.2", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.41"
+unicode-width = "0.2.1"
