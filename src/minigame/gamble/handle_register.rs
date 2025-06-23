@@ -29,7 +29,7 @@ pub async fn handle_register(ctx: Context<'_>) -> Result<String, Error> {
             let res = sqlx::query(
                 r#"
                 insert into gamble.users (id, name, tokens, rate, crit_rate, crit_mul, revive_tokens, auto_revive)
-                values ($1, $2, $3, $4, $5, $6, $7)
+                values ($1, $2, $3, $4, $5, $6, $7, $8)
                 "#
             )
             .bind(user_id.get() as i64)
