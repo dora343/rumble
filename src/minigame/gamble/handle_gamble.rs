@@ -6,13 +6,13 @@ use unicode_width::UnicodeWidthStr;
 use crate::Data;
 use crate::cmd::Context;
 use crate::minigame::gamble::handle_revive::handle_revive;
-use crate::minigame::gamble::{self, AutoReviveInfo, LeaderboardProfile, core};
+use crate::minigame::gamble::{
+    self, AutoReviveInfo, LeaderboardProfile, Statistics, UserTokens, core,
+};
 
-pub async fn handle_gamble(
-    data: &Data,
-    user_id: UserId,
-    bet: String,
-) -> Result<String, sqlx::Error> {
+pub async fn handle_gamble(ctx: Context<'_>, bet: String) -> Result<String, crate::cmd::Error> {
+    let user_id = ctx.author().id;
+
     let res: Option<gamble::User> = sqlx::query_as(
         r#"
         select 
@@ -42,7 +42,7 @@ pub async fn handle_gamble(
         "#,
     )
     .bind(user_id.get() as i64)
-    .fetch_optional(&data.dbpool)
+    .fetch_optional(&ctx.data().dbpool)
     .await?;
 
     if let None = res {
@@ -87,11 +87,11 @@ pub async fn handle_gamble(
 
                 _ => {
                     let result = core::gamble(user.clone(), bet)
-                        .update_user(&data.dbpool)
+                        .update_user(&ctx.data().dbpool)
                         .await?
-                        .insert_record(&data.dbpool)
+                        .insert_record(&ctx.data().dbpool)
                         .await?
-                        .update_user_stat(&data.dbpool)
+                        .update_user_stat(&ctx.data().dbpool)
                         .await?;
 
                     Ok(match result.success {
@@ -112,7 +112,7 @@ pub async fn handle_gamble(
 
                                 match user.auto_revive {
                                     true => {
-                                        let revive = handle_revive(data, user_id).await?;
+                                        let revive = handle_revive(ctx.data(), user_id).await?;
 
                                         MessageBuilder::new()
                                             .push(fail_msg)
@@ -281,4 +281,69 @@ pub async fn handle_leaderboard(ctx: Context<'_>) -> Result<String, crate::cmd::
         .push_line("# Leaderboard")
         .push_codeblock(msg, Some("rust"))
         .build())
+}
+
+pub async fn handle_statistics(ctx: Context<'_>) -> Result<String, crate::cmd::Error> {
+    let res: Option<Statistics> = sqlx::query_as(
+        r#"
+        select 
+            u.tokens,
+            u.auto_revive,
+            s.play_count,
+            s.success_count,
+            s.fail_count,
+            s.revive_count,
+            s.max_tokens,
+            s.max_success_bet,
+            s.max_fail_bet,
+            s.max_successive_success,
+            s.max_successive_fail
+        from gamble.users u
+        left join gamble.user_stat s
+        on u.id = s.id
+        where u.id = $1;
+        "#,
+    )
+    .bind(ctx.author().id.get() as i64)
+    .fetch_optional(&ctx.data().dbpool)
+    .await?;
+
+    match res {
+        Some(stats) => Ok(MessageBuilder::new()
+            .push_line("# Statistics")
+            .push_line("```rust")
+            .push_line(format!("                      Tokens: {}", stats.tokens))
+            .push_line(format!("                 Auto Revive: {}", stats.auto_revive))
+            .push_line(format!("                  Play Count: {}", stats.play_count))
+            .push_line(format!("               Total Success: {}", stats.success_count))
+            .push_line(format!("               Total Failure: {}", stats.fail_count))
+            .push_line(format!("                Revive Count: {}", stats.revive_count))
+            .push_line(format!("              Highest Tokens: {}", stats.max_tokens))
+            .push_line(format!("      Highest Successful Bet: {}", stats.max_success_bet))
+            .push_line(format!("    Highest Unsuccessful Bet: {}", stats.max_fail_bet))
+            .push_line(format!(" Highest Consecutive Success: {}", stats.max_successive_success))
+            .push_line(format!(" Highest Consecutive Failure: {}", stats.max_successive_fail))
+            .push_line("```")
+            .build()),
+        None => Ok(MessageBuilder::new()
+            .push("You are not registered.\n")
+            .push("Use `.register` to get registered.")
+            .build()),
+    }
+}
+
+pub async fn handle_allin(ctx: Context<'_>) -> Result<String, crate::cmd::Error> {
+    let res: UserTokens = sqlx::query_as(
+        r#"
+        select 
+            tokens
+        from gamble.users
+        where id = $1
+        "#,
+    )
+    .bind(ctx.author().id.get() as i64)
+    .fetch_one(&ctx.data().dbpool)
+    .await?;
+
+    handle_gamble(ctx, res.0.to_string()).await
 }

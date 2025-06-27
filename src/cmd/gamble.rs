@@ -1,18 +1,20 @@
 use crate::cmd::Context;
 use crate::cmd::Error;
+use crate::minigame::gamble::handle_gamble::handle_allin;
 use crate::minigame::gamble::handle_gamble::handle_autorevive;
 use crate::minigame::gamble::handle_gamble::handle_gamble;
 use crate::minigame::gamble::handle_gamble::handle_leaderboard;
+use crate::minigame::gamble::handle_gamble::handle_statistics;
 
 /// Displays the author's account creation date
 #[poise::command(
     prefix_command,
-    subcommands("autorevive", "leaderboard"),
+    subcommands("autorevive", "leaderboard", "statistics", "allin"),
     aliases("g"),
     help_text_fn = "help_gamble"
 )]
 pub async fn gamble(ctx: Context<'_>, bet: String) -> Result<(), Error> {
-    let msg = handle_gamble(ctx.data(), ctx.author().id, bet).await?;
+    let msg = handle_gamble(ctx, bet).await?;
     ctx.reply(msg).await?;
     Ok(())
 }
@@ -40,6 +42,20 @@ pub async fn autorevive(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(prefix_command, aliases("lb"))]
 pub async fn leaderboard(ctx: Context<'_>) -> Result<(), Error> {
     let msg = handle_leaderboard(ctx).await?;
+    ctx.reply(msg).await?;
+    Ok(())
+}
+
+#[poise::command(prefix_command, aliases("stat"))]
+pub async fn statistics(ctx: Context<'_>) -> Result<(), Error> {
+    let msg = handle_statistics(ctx).await?;
+    ctx.reply(msg).await?;
+    Ok(())
+}
+
+#[poise::command(prefix_command, aliases("all"))]
+pub async fn allin(ctx: Context<'_>) -> Result<(), Error> {
+    let msg = handle_allin(ctx).await?;
     ctx.reply(msg).await?;
     Ok(())
 }

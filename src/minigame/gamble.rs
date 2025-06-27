@@ -48,3 +48,25 @@ struct LeaderboardProfile {
     name: String,
     tokens: i64,
 }
+
+#[derive(sqlx::FromRow, Debug)]
+struct Statistics {
+    tokens: i64,
+    auto_revive: bool,
+    play_count: i32,
+    success_count: i32,
+    fail_count: i32,
+    revive_count: i32,
+    max_tokens: i64,
+    max_success_bet: i64,
+    max_fail_bet: i64,
+    max_successive_success: i32,
+    max_successive_fail: i32,
+}
+
+
+#[derive(sqlx::FromRow, Debug)]
+struct UserTokens(i64);
+
+
+
