@@ -64,9 +64,5 @@ struct Statistics {
     max_successive_fail: i32,
 }
 
-
 #[derive(sqlx::FromRow, Debug)]
 struct UserTokens(i64);
-
-
-

@@ -28,8 +28,9 @@ pub async fn message_handler(
     let ping_bot = MessageBuilder::new()
         .mention(&ctx.cache.current_user().id)
         .build();
-        
-    let twitter_x_regex = Regex::new(r"https:\/\/(x|twitter)\.com\/[A-Za-z0-9_]{1,15}\/status\/([0-9]+)").unwrap();
+
+    let twitter_x_regex =
+        Regex::new(r"https:\/\/(x|twitter)\.com\/[A-Za-z0-9_]{1,15}\/status\/([0-9]+)").unwrap();
 
     match msg {
         msg if msg.content.eq("dora") => respond_ping_dora(ctx, msg).await,

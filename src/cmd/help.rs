@@ -33,8 +33,8 @@ pub async fn help(ctx: Context<'_>) -> Result<(), Error> {
         .push_line("  Command: `.gamble leaderboard`")
         .push_line("    Alias: `.g lb`")
         .push_line("### Revive")
-        .push_line("  Command: `.revive`")        
-        // .push_line("```")        
+        .push_line("  Command: `.revive`")
+        // .push_line("```")
         .build();
     // println!("{}", response);
     ctx.say(response).await?;

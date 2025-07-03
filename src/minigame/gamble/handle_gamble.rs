@@ -313,16 +313,46 @@ pub async fn handle_statistics(ctx: Context<'_>) -> Result<String, crate::cmd::E
             .push_line("# Statistics")
             .push_line("```rust")
             .push_line(format!("                      Tokens: {}", stats.tokens))
-            .push_line(format!("                 Auto Revive: {}", stats.auto_revive))
-            .push_line(format!("                  Play Count: {}", stats.play_count))
-            .push_line(format!("               Total Success: {}", stats.success_count))
-            .push_line(format!("               Total Failure: {}", stats.fail_count))
-            .push_line(format!("                Revive Count: {}", stats.revive_count))
-            .push_line(format!("              Highest Tokens: {}", stats.max_tokens))
-            .push_line(format!("      Highest Successful Bet: {}", stats.max_success_bet))
-            .push_line(format!("    Highest Unsuccessful Bet: {}", stats.max_fail_bet))
-            .push_line(format!(" Highest Consecutive Success: {}", stats.max_successive_success))
-            .push_line(format!(" Highest Consecutive Failure: {}", stats.max_successive_fail))
+            .push_line(format!(
+                "                 Auto Revive: {}",
+                stats.auto_revive
+            ))
+            .push_line(format!(
+                "                  Play Count: {}",
+                stats.play_count
+            ))
+            .push_line(format!(
+                "               Total Success: {}",
+                stats.success_count
+            ))
+            .push_line(format!(
+                "               Total Failure: {}",
+                stats.fail_count
+            ))
+            .push_line(format!(
+                "                Revive Count: {}",
+                stats.revive_count
+            ))
+            .push_line(format!(
+                "              Highest Tokens: {}",
+                stats.max_tokens
+            ))
+            .push_line(format!(
+                "      Highest Successful Bet: {}",
+                stats.max_success_bet
+            ))
+            .push_line(format!(
+                "    Highest Unsuccessful Bet: {}",
+                stats.max_fail_bet
+            ))
+            .push_line(format!(
+                " Highest Consecutive Success: {}",
+                stats.max_successive_success
+            ))
+            .push_line(format!(
+                " Highest Consecutive Failure: {}",
+                stats.max_successive_fail
+            ))
             .push_line("```")
             .build()),
         None => Ok(MessageBuilder::new()
