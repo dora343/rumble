@@ -15,7 +15,7 @@ pub async fn event_handler(
             println!("Logged in as {}", data_about_bot.user.name);
         }
         serenity::FullEvent::Message { new_message } => {
-            message_handler(ctx, data, new_message).await?;
+            message_handler(ctx, data, &mut new_message.clone()).await?;
         }
         _ => {}
     }
