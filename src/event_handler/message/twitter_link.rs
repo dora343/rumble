@@ -31,33 +31,29 @@ impl Tweet {
         }
     }
 
-    fn set_author(&mut self, author: String) -> &mut Self {
+    fn set_author(mut self, author: String) -> Self {
         self.author = author;
         self
     }
 
-    fn set_author_handle(&mut self, author_handle: String) -> &mut Self {
+    fn set_author_handle(mut self, author_handle: String) -> Self {
         self.author_handle = author_handle;
         self
     }
 
-    fn set_text(&mut self, text: String) -> &mut Self {
+    fn set_text(mut self, text: String) -> Self {
         self.text = text;
         self
     }
 
-    fn set_image_url(&mut self, image_url: String) -> &mut Self {
+    fn set_image_url(mut self, image_url: String) -> Self {
         self.image_url = Some(image_url);
         self
     }
 
-    fn set_author_url(&mut self, author_url: String) -> &mut Self {
+    fn set_author_url(mut self, author_url: String) -> Self {
         self.author_url = author_url;
         self
-    }
-
-    fn build(&mut self) -> Self {
-        self.clone()
     }
 
     pub async fn _from_fxtwitter(tid: String) -> Result<Self, Error> {
@@ -134,15 +130,13 @@ impl Tweet {
                     .set_author_handle(author_handle)
                     .set_author_url(author_url)
                     .set_text(text)
-                    .set_image_url(image_url)
-                    .build())
+                    .set_image_url(image_url))
             }
             None => Ok(Tweet::new()
                 .set_author(author)
                 .set_author_handle(author_handle)
                 .set_author_url(author_url)
-                .set_text(text)
-                .build()),
+                .set_text(text)),
         }
     }
 
@@ -215,15 +209,13 @@ impl Tweet {
                     .set_author_handle(author_handle)
                     .set_author_url(author_url)
                     .set_text(text)
-                    .set_image_url(image_url)
-                    .build())
+                    .set_image_url(image_url))
             }
             false => Ok(Tweet::new()
                 .set_author(author)
                 .set_author_handle(author_handle)
                 .set_author_url(author_url)
-                .set_text(text)
-                .build()),
+                .set_text(text)),
         }
     }
 
