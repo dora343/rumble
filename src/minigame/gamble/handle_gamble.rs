@@ -112,7 +112,7 @@ pub async fn handle_gamble(ctx: Context<'_>, bet: String) -> Result<String, crat
 
                                 match user.auto_revive {
                                     true => {
-                                        let revive = handle_revive(ctx.data(), user_id).await?;
+                                        let revive = handle_revive(ctx, user_id).await?;
 
                                         MessageBuilder::new()
                                             .push(fail_msg)

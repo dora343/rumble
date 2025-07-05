@@ -1,6 +1,6 @@
 use serenity::all::{MessageBuilder, UserId};
 
-use crate::Data;
+use crate::cmd::Context;
 
 #[derive(sqlx::FromRow, Debug)]
 struct ReviveInfo {
@@ -10,7 +10,7 @@ struct ReviveInfo {
     revive_count: i32,
 }
 
-pub async fn handle_revive(data: &Data, user_id: UserId) -> Result<String, sqlx::Error> {
+pub async fn handle_revive(ctx: Context<'_>, user_id: UserId) -> Result<String, sqlx::Error> {
     let res: Option<ReviveInfo> = sqlx::query_as(
         r#"
         select 
@@ -25,7 +25,7 @@ pub async fn handle_revive(data: &Data, user_id: UserId) -> Result<String, sqlx:
         "#,
     )
     .bind(user_id.get() as i64)
-    .fetch_optional(&data.dbpool)
+    .fetch_optional(&ctx.data().dbpool)
     .await?;
 
     Ok(match res {
@@ -48,7 +48,7 @@ pub async fn handle_revive(data: &Data, user_id: UserId) -> Result<String, sqlx:
                 )
                 .bind(revive_info.revive_tokens)
                 .bind(revive_info.id)
-                .execute(&data.dbpool)
+                .execute(&ctx.data().dbpool)
                 .await?;
 
                 println!("Affected rows: {}", res.rows_affected());
@@ -63,7 +63,7 @@ pub async fn handle_revive(data: &Data, user_id: UserId) -> Result<String, sqlx:
                 )
                 .bind(revive_info.revive_count + 1)
                 .bind(revive_info.id)
-                .execute(&data.dbpool)
+                .execute(&ctx.data().dbpool)
                 .await?;
 
                 println!("Affected rows: {}", res.rows_affected());

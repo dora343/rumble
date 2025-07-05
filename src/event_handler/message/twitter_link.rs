@@ -1,7 +1,10 @@
+use ::serenity::all::ButtonStyle;
+use ::serenity::all::CreateButton;
 use ::serenity::all::CreateMessage;
 use ::serenity::all::EditMessage;
 use ::serenity::all::MessageBuilder;
 use ::serenity::all::MessageFlags;
+use ::serenity::all::ReactionType;
 use regex::NoExpand;
 use regex::Regex;
 use reqwest::StatusCode;
@@ -18,6 +21,9 @@ struct Tweet {
     author_url: String,
     text: String,
     image_url: Option<String>,
+    replies: u64,
+    retweets: u64,
+    likes: u64,
 }
 
 impl Tweet {
@@ -28,6 +34,9 @@ impl Tweet {
             author_url: String::from(""),
             text: String::from(""),
             image_url: None,
+            replies: 0,
+            retweets: 0,
+            likes: 0,
         }
     }
 
@@ -56,7 +65,22 @@ impl Tweet {
         self
     }
 
-    pub async fn _from_fxtwitter(tid: String) -> Result<Self, Error> {
+    fn set_replies(mut self, replies: u64) -> Self {
+        self.replies = replies;
+        self
+    }
+
+    fn set_retweets(mut self, retweets: u64) -> Self {
+        self.retweets = retweets;
+        self
+    }
+
+    fn set_likes(mut self, likes: u64) -> Self {
+        self.likes = likes;
+        self
+    }
+
+    pub async fn from_fxtwitter(tid: String) -> Result<Self, Error> {
         let url = String::from(format!("https://api.fxtwitter.com/i/status/{}", tid));
         let client = reqwest::ClientBuilder::new()
             .user_agent("RumbleBot/0.1.0")
@@ -92,7 +116,24 @@ impl Tweet {
             .unwrap_or_default()
             .to_string();
 
+        let replies = query_result["tweet"]["replies"]
+            .as_u64()
+            .unwrap_or_default();
+        let retweets = query_result["tweet"]["retweets"]
+            .as_u64()
+            .unwrap_or_default();
+        let likes = query_result["tweet"]["likes"].as_u64().unwrap_or_default();
+
         let has_media = query_result["tweet"].get("media");
+
+        let tweet = Tweet::new()
+            .set_author(author)
+            .set_author_handle(author_handle)
+            .set_author_url(author_url)
+            .set_text(text)
+            .set_replies(replies)
+            .set_retweets(retweets)
+            .set_likes(likes);
 
         match has_media {
             Some(_) => {
@@ -125,18 +166,9 @@ impl Tweet {
                     }
                 };
 
-                Ok(Tweet::new()
-                    .set_author(author)
-                    .set_author_handle(author_handle)
-                    .set_author_url(author_url)
-                    .set_text(text)
-                    .set_image_url(image_url))
+                Ok(tweet.set_image_url(image_url))
             }
-            None => Ok(Tweet::new()
-                .set_author(author)
-                .set_author_handle(author_handle)
-                .set_author_url(author_url)
-                .set_text(text)),
+            None => Ok(tweet),
         }
     }
 
@@ -171,6 +203,10 @@ impl Tweet {
 
         let author_url = format!("https://x.com/{}", author_handle);
 
+        let replies = query_result["replies"].as_u64().unwrap_or_default();
+        let retweets = query_result["retweets"].as_u64().unwrap_or_default();
+        let likes = query_result["likes"].as_u64().unwrap_or_default();
+
         let mut text = query_result["text"]
             .as_str()
             .unwrap_or_default()
@@ -182,6 +218,15 @@ impl Tweet {
         text = remove_ending_tco_link_regex
             .replace(&text, NoExpand(""))
             .to_string();
+
+        let tweet = Tweet::new()
+            .set_author(author)
+            .set_author_handle(author_handle)
+            .set_author_url(author_url)
+            .set_text(text)
+            .set_replies(replies)
+            .set_retweets(retweets)
+            .set_likes(likes);
 
         let has_media = query_result["hasMedia"].as_bool().unwrap_or_default();
 
@@ -204,22 +249,37 @@ impl Tweet {
                     }
                 };
 
-                Ok(Tweet::new()
-                    .set_author(author)
-                    .set_author_handle(author_handle)
-                    .set_author_url(author_url)
-                    .set_text(text)
-                    .set_image_url(image_url))
+                Ok(tweet.set_image_url(image_url))
             }
-            false => Ok(Tweet::new()
-                .set_author(author)
-                .set_author_handle(author_handle)
-                .set_author_url(author_url)
-                .set_text(text)),
+            false => Ok(tweet),
         }
     }
 
-    pub fn create_msg(self) -> CreateMessage {
+    fn replies_button(label: String) -> CreateButton {
+        CreateButton::new("replies")
+            .emoji("💬".parse::<ReactionType>().unwrap())
+            .label(label)
+            .style(ButtonStyle::Secondary)
+            .disabled(true)
+    }
+
+    fn retweets_button(label: String) -> CreateButton {
+        CreateButton::new("retweets")
+            .emoji("🔁".parse::<ReactionType>().unwrap())
+            .label(label)
+            .style(ButtonStyle::Secondary)
+            .disabled(true)
+    }
+
+    fn likes_button(label: String) -> CreateButton {
+        CreateButton::new("likes")
+            .emoji("❤".parse::<ReactionType>().unwrap())
+            .label(label)
+            .style(ButtonStyle::Secondary)
+            .disabled(true)
+    }
+
+    pub fn create_msg(&self) -> CreateMessage {
         // apply links to hashtag
         let capture_all_hashtags_regex = Regex::new(r"(#[\p{L}\p{N}]+)").expect("invalid regex");
 
@@ -249,15 +309,37 @@ impl Tweet {
         let content = MessageBuilder::new()
             .push_line(format!(
                 "### {} [(@{})]({})",
-                self.author, self.author_handle, self.author_url
+                &self.author, &self.author_handle, &self.author_url
             ))
             .push_line("")
             .push_line(tweet_msg)
+            .push_line("")
             .build();
 
-        CreateMessage::new()
+        let msg = CreateMessage::new()
             .content(content)
-            .flags(MessageFlags::SUPPRESS_EMBEDS)
+            .flags(MessageFlags::SUPPRESS_EMBEDS);
+
+        match &self.image_url {
+            Some(_) => msg,
+            None => msg
+                .button(Self::replies_button(format!(" {}", self.replies)))
+                .button(Self::retweets_button(format!(" {}", self.retweets)))
+                .button(Self::likes_button(format!(" {}", self.likes))),
+        }
+    }
+
+    pub fn create_follow_up_media_msg(&self) -> Option<CreateMessage> {
+        match &self.image_url {
+            None => None,
+            Some(image_url) => Some(
+                CreateMessage::new()
+                    .content(image_url)
+                    .button(Self::replies_button(format!(" {}", self.replies)))
+                    .button(Self::retweets_button(format!(" {}", self.retweets)))
+                    .button(Self::likes_button(format!(" {}", self.likes))),
+            ),
+        }
     }
 }
 
@@ -271,10 +353,11 @@ pub async fn respond_twitter_link(ctx: &serenity::Context, msg: &mut Message) ->
 
     let tid = String::from(&caps["tid"]);
 
-    // let tweet = Tweet::from_fxtwitter(tid).await?;
-    let tweet = Tweet::from_vxtwitter(tid).await?;
+    let tweet = match Tweet::from_fxtwitter(tid.clone()).await {
+        Ok(tweet) => tweet,
+        Err(_) => Tweet::from_vxtwitter(tid).await?,
+    };
     println!("{:?}", tweet);
-    let image_url = tweet.image_url.clone();
 
     msg.edit(&ctx, EditMessage::new().suppress_embeds(true))
         .await?;
@@ -283,8 +366,8 @@ pub async fn respond_twitter_link(ctx: &serenity::Context, msg: &mut Message) ->
         .send_message(&ctx, tweet.create_msg())
         .await?;
 
-    if let Some(image_url) = image_url {
-        msg.channel_id.say(&ctx, image_url).await?;
+    if let Some(media_msg) = tweet.create_follow_up_media_msg() {
+        msg.channel_id.send_message(&ctx, media_msg).await?;
     };
 
     typing.stop();

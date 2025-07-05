@@ -4,7 +4,7 @@ use crate::cmd::Context;
 use crate::cmd::Error;
 
 /// Displays the author's account creation date
-#[poise::command(prefix_command, aliases("h"))]
+#[poise::command(prefix_command, slash_command, aliases("h"))]
 pub async fn help(ctx: Context<'_>) -> Result<(), Error> {
     // obtain the author as user if not specified
     let response: String = MessageBuilder::new()
@@ -15,8 +15,8 @@ pub async fn help(ctx: Context<'_>) -> Result<(), Error> {
         .push_line("  Command: `.help`")
         .push_line("    Alias: `.h`")
         .push_line("### Register your account")
-        .push_line("  Command: `.register`")
-        .push_line("    Alias: `.reg`")
+        .push_line("  Command: `.g register`")
+        .push_line("    Alias: `.g reg`")
         .push_line("### Gamble with your tokens")
         .push_line("  Command: `.gamble <your bet>`")
         .push_line("    Alias: `.g <your bet>`")
@@ -33,7 +33,8 @@ pub async fn help(ctx: Context<'_>) -> Result<(), Error> {
         .push_line("  Command: `.gamble leaderboard`")
         .push_line("    Alias: `.g lb`")
         .push_line("### Revive")
-        .push_line("  Command: `.revive`")
+        .push_line("  Command: `.gamble revive`")
+        .push_line("    Alias: `.g rev`")
         // .push_line("```")
         .build();
     // println!("{}", response);
