@@ -122,7 +122,7 @@ pub async fn handle_gamble(ctx: Context<'_>, bet: String) -> Result<String, crat
                                     }
                                     false => MessageBuilder::new()
                                         .push(fail_msg)
-                                        .push("Use `.revive` to start again.")
+                                        .push("Use `.g revive` to start again.")
                                         .build(),
                                 }
                             }
