@@ -37,11 +37,12 @@ async fn main() {
             },
             commands: vec![
                 cmd::age::age(),
-                cmd::recursion_test::recursion_test(),
+                cmd::album::add_image_to_album(),
                 cmd::help::help(),
                 cmd::register::register(),
                 cmd::gamble::gamble(),
                 cmd::revive::revive(),
+                cmd::astral::astral(),
             ],
             event_handler: |ctx, event, framework, data| {
                 Box::pin(event_handler::event_handler(ctx, event, framework, data))

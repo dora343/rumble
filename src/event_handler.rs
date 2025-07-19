@@ -1,7 +1,7 @@
 use poise::serenity_prelude as serenity;
 pub mod message;
 
-use crate::{Data, event_handler::message::message_handler};
+use crate::{event_handler::{message::message_handler}, Data};
 type Error = Box<dyn std::error::Error + Send + Sync>;
 
 pub async fn event_handler(

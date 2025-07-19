@@ -175,8 +175,6 @@ impl Tweet {
     pub async fn from_vxtwitter(tid: String) -> Result<Self, Error> {
         let url = String::from(format!("https://api.vxtwitter.com/i/status/{}", tid));
 
-        println!("Calling api: {}", url);
-
         let client = reqwest::ClientBuilder::new()
             .user_agent("RumbleBot/0.1.0")
             .build()
@@ -369,7 +367,6 @@ pub async fn respond_twitter_link(ctx: &serenity::Context, msg: &mut Message) ->
     if let Some(media_msg) = tweet.create_follow_up_media_msg() {
         msg.channel_id.send_message(&ctx, media_msg).await?;
     };
-
-    typing.stop();
+    drop(typing);
     Ok(())
 }

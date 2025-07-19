@@ -3,7 +3,7 @@ use serenity::all::MessageBuilder;
 use crate::cmd::Context;
 use crate::cmd::Error;
 
-/// Displays the author's account creation date
+/// 列出所有機械人支援的功能與指令
 #[poise::command(prefix_command, slash_command, aliases("h"))]
 pub async fn help(ctx: Context<'_>) -> Result<(), Error> {
     // obtain the author as user if not specified
