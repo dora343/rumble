@@ -22,7 +22,7 @@ struct AlbumSize(i64);
 /// Displays the author's account creation date
 #[poise::command(context_menu_command = "Add this image to Album", owners_only)]
 pub async fn add_image_to_album(ctx: ApplicationContext<'_, Data, Error>, msg: Message) -> Result<(), Error> {
-    ctx.interaction.defer(ctx).await?;
+    ctx.interaction.defer_ephemeral(ctx).await?;
 
     // obtain the author as user if not specified
     let _response: String = "https://ipp.dora343.dev/share/KEY".into();
