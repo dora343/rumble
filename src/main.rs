@@ -51,10 +51,9 @@ async fn main() {
         })
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
-                poise::builtins::register_in_guild(
+                poise::builtins::register_globally(
                     ctx,
-                    &framework.options().commands,
-                    586966462527307796.into(),
+                    &framework.options().commands
                 )
                 .await?;
                 Ok(Data { dbpool: pool })
