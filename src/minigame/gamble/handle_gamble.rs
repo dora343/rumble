@@ -34,10 +34,14 @@ pub async fn handle_gamble(ctx: Context<'_>, bet: String) -> Result<String, crat
             s.max_success_bet,
             s.max_fail_bet,
             s.max_successive_success,
-            s.max_successive_fail
+            s.max_successive_fail,
+            l.buff_remaining_rounds,
+            l.last_login
         from gamble.users u
-        left join gamble.user_stat s
+        join gamble.user_stat s
         on u.id = s.id
+        join gamble.daily_login l
+        on u.id = l.id
         where u.id = $1;
         "#,
     )
@@ -48,7 +52,7 @@ pub async fn handle_gamble(ctx: Context<'_>, bet: String) -> Result<String, crat
     if let None = res {
         return Ok(MessageBuilder::new()
             .push("You are not registered.\n")
-            .push("Use `.register` to get registered.")
+            .push("Use `.g register` to get registered.")
             .build());
     }
 
@@ -92,48 +96,56 @@ pub async fn handle_gamble(ctx: Context<'_>, bet: String) -> Result<String, crat
                         .insert_record(&ctx.data().dbpool)
                         .await?
                         .update_user_stat(&ctx.data().dbpool)
+                        .await?
+                        .update_daily_login(&ctx.data().dbpool)
                         .await?;
 
-                    Ok(match result.success {
+                    let mut msg = match result.success {
                         true => MessageBuilder::new()
                             .push("Success! ")
                             .push_bold(format!("{} tokens ", result.differential))
                             .push("have been added to your profile.\n")
                             .push(format!("You have {} tokens.", result.tokens_after))
                             .build(),
-                        false => match result.tokens_after == 0 {
+                        false => MessageBuilder::new()
+                            .push("Unlucky! ")
+                            .push_bold(format!("{} tokens ", result.differential.abs()))
+                            .push("have been taken from your profile.\n")
+                            .push(format!("You have {} tokens.", result.tokens_after))
+                            .build(),
+                    };
+
+                    if result.buff_remaining_rounds > 0 {
+                        msg = MessageBuilder::new()
+                            .push_line(msg)
+                            .push_italic(format!(
+                                "Login Bonus remaining round(s): {}",
+                                result.buff_remaining_rounds
+                            ))
+                            .build();
+                    }
+
+                    if result.tokens_after == 0 {
+                        match user.auto_revive {
                             true => {
-                                let fail_msg = MessageBuilder::new()
-                                    .push("Unlucky! ")
-                                    .push_bold(format!("{} tokens ", result.differential.abs()))
-                                    .push("have been taken from your profile.\n")
-                                    .push_line(format!("You have {} tokens.", result.tokens_after))
+                                let revive = handle_revive(ctx, user_id).await?;
+
+                                msg = MessageBuilder::new()
+                                    .push_line(msg)
+                                    .push_italic_line("Auto Revive activated.")
+                                    .push(revive)
                                     .build();
-
-                                match user.auto_revive {
-                                    true => {
-                                        let revive = handle_revive(ctx, user_id).await?;
-
-                                        MessageBuilder::new()
-                                            .push(fail_msg)
-                                            .push_italic_line("Auto Revive activated.")
-                                            .push(revive)
-                                            .build()
-                                    }
-                                    false => MessageBuilder::new()
-                                        .push(fail_msg)
-                                        .push("Use `.g revive` to start again.")
-                                        .build(),
-                                }
                             }
-                            false => MessageBuilder::new()
-                                .push("Unlucky! ")
-                                .push_bold(format!("{} tokens ", result.differential.abs()))
-                                .push("have been taken from your profile.\n")
-                                .push(format!("You have {} tokens.", result.tokens_after))
-                                .build(),
-                        },
-                    })
+                            false => {
+                                msg = MessageBuilder::new()
+                                    .push_line(msg)
+                                    .push("Use `.g revive` to start again.")
+                                    .build();
+                            }
+                        }
+                    }
+
+                    Ok(msg)
                 }
             }
         }
@@ -157,7 +169,6 @@ pub async fn handle_autorevive(data: &Data, user_id: UserId) -> Result<String, s
 
     match res {
         Some(auto_revive_info) => {
-            println!("Updating user {:?} in gamble.users", auto_revive_info.id);
             let res = sqlx::query(
                 r#"
                 update gamble.users
@@ -170,7 +181,6 @@ pub async fn handle_autorevive(data: &Data, user_id: UserId) -> Result<String, s
             .bind(auto_revive_info.id)
             .execute(&data.dbpool)
             .await?;
-            println!("Affected rows: {}", res.rows_affected());
 
             let on_off = match auto_revive_info.auto_revive {
                 true => "off",
@@ -183,7 +193,7 @@ pub async fn handle_autorevive(data: &Data, user_id: UserId) -> Result<String, s
         }
         None => Ok(MessageBuilder::new()
             .push("You are not registered.\n")
-            .push("Use `.register` to get registered.")
+            .push("Use `.g register` to get registered.")
             .build()),
     }
 }

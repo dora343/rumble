@@ -7,6 +7,7 @@ use crate::minigame::gamble::handle_gamble::handle_leaderboard;
 use crate::minigame::gamble::handle_gamble::handle_statistics;
 use crate::minigame::gamble::handle_register::handle_register;
 use crate::minigame::gamble::handle_revive::handle_revive;
+use crate::minigame::gamble::handle_login::handle_login;
 
 /// Displays the author's account creation date
 #[poise::command(
@@ -17,7 +18,8 @@ use crate::minigame::gamble::handle_revive::handle_revive;
         "statistics",
         "allin",
         "register",
-        "revive"
+        "revive",
+        "login"
     ),
     aliases("g"),
     help_text_fn = "help_gamble"
@@ -79,6 +81,13 @@ pub async fn register(ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(prefix_command, aliases("rev"))]
 pub async fn revive(ctx: Context<'_>) -> Result<(), Error> {
     let msg = handle_revive(ctx, ctx.author().id).await?;
+    ctx.reply(msg).await?;
+    Ok(())
+}
+
+#[poise::command(prefix_command)]
+pub async fn login(ctx: Context<'_>) -> Result<(), Error> {
+    let msg = handle_login(ctx).await?;
     ctx.reply(msg).await?;
     Ok(())
 }

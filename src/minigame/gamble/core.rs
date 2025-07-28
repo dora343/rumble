@@ -1,6 +1,9 @@
+use std::{arch::x86_64, cmp::max};
+
+use chrono::Local;
 use rand::Rng;
 
-use crate::minigame::gamble::{MAX_RATE, MULTIPLIER_BASE, User};
+use crate::minigame::gamble::{User, DAILY_LOGIN_BUFF_RATE, MAX_RATE, MULTIPLIER_BASE};
 
 #[derive(Debug)]
 pub struct GambleResult {
@@ -25,11 +28,11 @@ pub struct GambleResult {
     max_fail_bet: i64,
     max_successive_success: i32,
     max_successive_fail: i32,
+    pub buff_remaining_rounds: i32,
 }
 
 impl GambleResult {
     pub async fn update_user(self, dbpool: &sqlx::PgPool) -> Result<GambleResult, sqlx::Error> {
-        println!("Updating user {:?} in gamble.users", self.user_id);
         let res = sqlx::query(
             r#"
             update gamble.users
@@ -41,7 +44,6 @@ impl GambleResult {
         .bind(self.user_id)
         .execute(dbpool)
         .await?;
-        println!("Affected rows: {}", res.rows_affected());
         Ok(self)
     }
 
@@ -49,8 +51,7 @@ impl GambleResult {
         self,
         dbpool: &sqlx::PgPool,
     ) -> Result<GambleResult, sqlx::Error> {
-        println!("Updating user {:?} in gamble.user_stat", self.user_id);
-        let res = sqlx::query(
+        sqlx::query(
             r#"
             update gamble.user_stat
             set 
@@ -84,13 +85,11 @@ impl GambleResult {
         .bind(self.user_id)
         .execute(dbpool)
         .await?;
-        println!("Affected rows: {}", res.rows_affected());
         Ok(self)
     }
 
     pub async fn insert_record(self, dbpool: &sqlx::PgPool) -> Result<GambleResult, sqlx::Error> {
-        println!("Inserting new record {:?} into gamble.records", self);
-        let res = sqlx::query(
+        sqlx::query(
             r#"
             insert into gamble.records 
             (user_id, play_count, bet, success, is_crit, rate, crit_rate, tokens_before, tokens_after)
@@ -108,7 +107,21 @@ impl GambleResult {
         .bind(self.tokens_after)
         .execute(dbpool)
         .await?;
-        println!("Affected rows: {}", res.rows_affected());
+        Ok(self)
+    }
+    
+    pub async fn update_daily_login(self, dbpool: &sqlx::PgPool) -> Result<GambleResult, sqlx::Error> {
+        sqlx::query(
+            r#"
+            update gamble.daily_login
+            set buff_remaining_rounds = $1
+            where id = $2
+            "#,
+        )
+        .bind(self.buff_remaining_rounds)
+        .bind(self.user_id)
+        .execute(dbpool)
+        .await?;
         Ok(self)
     }
 }
@@ -120,8 +133,16 @@ pub fn gamble(user: User, bet: i64) -> GambleResult {
 
     let gamble_check: i16 = rng.random_range(1..(MAX_RATE as i16));
 
+    let mut rate = user.rate;
+
+    
+    if user.buff_remaining_rounds > 0 && user.last_login.date_naive() == Local::now().date_naive() {
+        // fixed rate for login bonus
+        rate = DAILY_LOGIN_BUFF_RATE;
+    }
+    
     let crit_success = user.crit_rate >= crit_check;
-    let gamble_success = user.rate >= gamble_check;
+    let gamble_success = rate >= gamble_check;
 
     let play_count = user.play_count + 1;
 
@@ -189,6 +210,16 @@ pub fn gamble(user: User, bet: i64) -> GambleResult {
         true => user.max_successive_fail + 1,
         false => user.max_successive_fail,
     };
+    
+    // only consume buff remaining rounds if failed
+    let mut buff_remaining_rounds = match gamble_success {
+        true => user.buff_remaining_rounds,
+        false => max(user.buff_remaining_rounds - 1, 0)
+    };
+    
+    if user.last_login.date_naive() != Local::now().date_naive() {
+        buff_remaining_rounds = 0;
+    }
 
     GambleResult {
         user_id: user.id,
@@ -197,7 +228,7 @@ pub fn gamble(user: User, bet: i64) -> GambleResult {
         bet,
         is_crit: crit_success,
         play_count,
-        rate: user.rate,
+        rate,
         crit_rate: user.crit_rate,
         tokens_before: user.tokens,
         tokens_after,
@@ -212,5 +243,6 @@ pub fn gamble(user: User, bet: i64) -> GambleResult {
         max_fail_bet,
         max_successive_success,
         max_successive_fail,
+        buff_remaining_rounds,
     }
 }

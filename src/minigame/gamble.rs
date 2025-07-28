@@ -1,7 +1,10 @@
+use chrono::Local;
+
 pub mod core;
 pub mod handle_gamble;
 pub mod handle_register;
 pub mod handle_revive;
+pub mod handle_login;
 
 const DEFAULT_TOKENS: i64 = 10000;
 const DEFAULT_RATE: i16 = 5000; // 50%
@@ -12,6 +15,10 @@ const DEFAULT_AUTO_REVIVE: bool = false;
 
 const MAX_RATE: i16 = 10000;
 const MULTIPLIER_BASE: f64 = 10000.0;
+
+const DAILY_LOGIN_BUFF_RATE: i16 = 8000; // 80%
+const MIN_LOGIN_BUFF_ROUNDS: i32 = 3;
+const MAX_LOGIN_BUFF_ROUNDS: i32 = 7;
 
 #[derive(sqlx::FromRow, Debug, PartialEq, Eq, Clone)]
 pub struct User {
@@ -34,6 +41,8 @@ pub struct User {
     max_fail_bet: i64,
     max_successive_success: i32,
     max_successive_fail: i32,
+    buff_remaining_rounds: i32,
+    last_login: chrono::DateTime<Local>,
 }
 
 #[derive(sqlx::FromRow, Debug)]
@@ -66,3 +75,11 @@ struct Statistics {
 
 #[derive(sqlx::FromRow, Debug)]
 struct UserTokens(i64);
+
+#[derive(sqlx::FromRow, Debug)]
+struct DailyLogin {
+    id: i64,
+    login_combo: i32,
+    buff_remaining_rounds: i32,
+    last_login: chrono::DateTime<Local>
+}

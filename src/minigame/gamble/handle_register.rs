@@ -25,7 +25,6 @@ pub async fn handle_register(ctx: Context<'_>) -> Result<String, Error> {
         None => {
             let username = user_id.to_user(ctx).await?.name;
 
-            println!("Inserting new player {} into gamble.users", user_id);
             let res = sqlx::query(
                 r#"
                 insert into gamble.users (id, name, tokens, rate, crit_rate, crit_mul, revive_tokens, auto_revive)
@@ -43,9 +42,7 @@ pub async fn handle_register(ctx: Context<'_>) -> Result<String, Error> {
             .execute(&ctx.data().dbpool)
             .await?;
 
-            println!("Affected rows: {}", res.rows_affected());
 
-            println!("Inserting new player {} into gamble.user_stat", user_id);
             let res = sqlx::query(
                 r#"
                 insert into gamble.user_stat (id, max_tokens)
@@ -57,7 +54,6 @@ pub async fn handle_register(ctx: Context<'_>) -> Result<String, Error> {
             .execute(&ctx.data().dbpool)
             .await?;
 
-            println!("Affected rows: {}", res.rows_affected());
 
             Ok(String::from("Successfully registered."))
         }

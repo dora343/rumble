@@ -35,6 +35,9 @@ pub async fn help(ctx: Context<'_>) -> Result<(), Error> {
         .push_line("### Revive")
         .push_line("  Command: `.gamble revive`")
         .push_line("    Alias: `.g rev`")
+        .push_line("### Login")
+        .push_line("  Command: `.gamble login`")
+        .push_line("    Alias: `.g login`")
         // .push_line("```")
         .build();
     // println!("{}", response);

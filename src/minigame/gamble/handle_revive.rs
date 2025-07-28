@@ -36,8 +36,6 @@ pub async fn handle_revive(ctx: Context<'_>, user_id: UserId) -> Result<String, 
 
         Some(revive_info) => match revive_info.tokens {
             0 => {
-                println!("{:?}", revive_info);
-                println!("Updating user {:?} in gamble.users", revive_info.id);
                 let res = sqlx::query(
                     r#"
                     update gamble.users
@@ -51,8 +49,6 @@ pub async fn handle_revive(ctx: Context<'_>, user_id: UserId) -> Result<String, 
                 .execute(&ctx.data().dbpool)
                 .await?;
 
-                println!("Affected rows: {}", res.rows_affected());
-                println!("Updating user {:?} in gamble.user_stat", revive_info.id);
                 let res = sqlx::query(
                     r#"
                     update gamble.user_stat
@@ -66,7 +62,6 @@ pub async fn handle_revive(ctx: Context<'_>, user_id: UserId) -> Result<String, 
                 .execute(&ctx.data().dbpool)
                 .await?;
 
-                println!("Affected rows: {}", res.rows_affected());
                 MessageBuilder::new()
                     .push("You")
                     .push_bold_line(" revived.")
