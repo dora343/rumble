@@ -18,7 +18,7 @@ const MULTIPLIER_BASE: f64 = 10000.0;
 
 const DAILY_LOGIN_BUFF_RATE: i16 = 8000; // 80%
 const MIN_LOGIN_BUFF_ROUNDS: i32 = 3;
-const MAX_LOGIN_BUFF_ROUNDS: i32 = 7;
+const MAX_LOGIN_BUFF_ROUNDS: i32 = 5;
 
 #[derive(sqlx::FromRow, Debug, PartialEq, Eq, Clone)]
 pub struct User {
