@@ -1,4 +1,4 @@
-use std::{arch::x86_64, cmp::max};
+use std::cmp::max;
 
 use chrono::Local;
 use rand::Rng;
@@ -33,7 +33,7 @@ pub struct GambleResult {
 
 impl GambleResult {
     pub async fn update_user(self, dbpool: &sqlx::PgPool) -> Result<GambleResult, sqlx::Error> {
-        let res = sqlx::query(
+        sqlx::query(
             r#"
             update gamble.users
             set tokens = $1
@@ -213,8 +213,8 @@ pub fn gamble(user: User, bet: i64) -> GambleResult {
     
     // only consume buff remaining rounds if failed
     let mut buff_remaining_rounds = match gamble_success {
-        true => user.buff_remaining_rounds,
-        false => max(user.buff_remaining_rounds - 1, 0)
+        false => user.buff_remaining_rounds,
+        true => max(user.buff_remaining_rounds - 1, 0)
     };
     
     if user.last_login.date_naive() != Local::now().date_naive() {
