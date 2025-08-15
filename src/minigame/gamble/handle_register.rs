@@ -25,7 +25,7 @@ pub async fn handle_register(ctx: Context<'_>) -> Result<String, Error> {
         None => {
             let username = user_id.to_user(ctx).await?.name;
 
-            let res = sqlx::query(
+            sqlx::query(
                 r#"
                 insert into gamble.users (id, name, tokens, rate, crit_rate, crit_mul, revive_tokens, auto_revive)
                 values ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -43,7 +43,7 @@ pub async fn handle_register(ctx: Context<'_>) -> Result<String, Error> {
             .await?;
 
 
-            let res = sqlx::query(
+            sqlx::query(
                 r#"
                 insert into gamble.user_stat (id, max_tokens)
                 values ($1, $2)
@@ -53,7 +53,16 @@ pub async fn handle_register(ctx: Context<'_>) -> Result<String, Error> {
             .bind(DEFAULT_TOKENS)
             .execute(&ctx.data().dbpool)
             .await?;
-
+            
+            sqlx::query(
+                r#"
+                insert into gamble.daily_login (id)
+                values ($1)
+                "#,
+            )
+            .bind(user_id.get() as i64)
+            .execute(&ctx.data().dbpool)
+            .await?;
 
             Ok(String::from("Successfully registered."))
         }
