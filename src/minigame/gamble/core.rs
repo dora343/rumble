@@ -163,7 +163,7 @@ pub fn gamble(user: User, bet: i64) -> GambleResult {
     
     let mut tp = user.tp;
 
-    let tokens_after = if (user.tokens + differential) as i128 >= user.revive_tokens as i128 * COMPRESS_TRIGGER as i128 {
+    let tokens_after = if (user.tokens + differential) as i128 > user.revive_tokens as i128 * COMPRESS_TRIGGER as i128 {
         // auto compress triggered
         tp = tp + COMPRESS_REWARD;
         user.revive_tokens

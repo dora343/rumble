@@ -226,13 +226,20 @@ pub async fn handle_leaderboard(ctx: Context<'_>) -> Result<String, crate::cmd::
     if res.is_empty() {
         return Ok("No one has registered.".into());
     }
+    
+    let player_count_len = std::cmp::max(4, res.len().checked_ilog10().unwrap_or(0) + 1);
 
     let max_name_len = std::cmp::max(6, res.iter().map(|x| x.name.len()).max().unwrap());
     
     let max_tp_len = std::cmp::max(2, res.iter().map(|x| x.tp.checked_ilog10().unwrap_or(0) + 1).max().unwrap());
     
-    let mut msg: String = String::from("Rank\tPlayer");
+    let mut msg: String = String::from("Rank");
+    let title_indent_before_tokens = 1 + (player_count_len - 4);
+    for _ in 0..title_indent_before_tokens {
+        msg.push(' ');
+    }
 
+    msg.push_str("Player");
     let title_indent_before_tokens = 2 + (max_name_len - 6);
     for _ in 0..title_indent_before_tokens {
         msg.push(' ');
@@ -263,6 +270,14 @@ pub async fn handle_leaderboard(ctx: Context<'_>) -> Result<String, crate::cmd::
             .execute(&ctx.data().dbpool)
             .await?;
 
+            let indent_before_name = player_count_len - (index + 1).checked_ilog10().unwrap_or(0);
+            
+            let mut indent0 = String::from("");
+            
+            for _ in 0..indent_before_name {
+                indent0.push(' ');
+            }
+
             let indent_before_tokens: usize = 2 + (max_name_len - username.width_cjk());
 
             let mut indent1 = String::from("");
@@ -280,8 +295,9 @@ pub async fn handle_leaderboard(ctx: Context<'_>) -> Result<String, crate::cmd::
             msg.push_str(
                 &MessageBuilder::new()
                     .push_line(format!(
-                        "{}\t   {}{}{}{}{}",
+                        "{}{}{}{}{}{}{}",
                         index + 1,
+                        indent0,
                         username,
                         indent1,
                         player_profile.tp,
@@ -291,6 +307,15 @@ pub async fn handle_leaderboard(ctx: Context<'_>) -> Result<String, crate::cmd::
                     .build(),
             );
         } else {
+            
+            let indent_before_name = player_count_len - (index + 1).checked_ilog10().unwrap_or(0);
+            
+            let mut indent0 = String::from("");
+            
+            for _ in 0..indent_before_name {
+                indent0.push(' ');
+            }
+            
             let indent_before_tokens: usize = 2 + (max_name_len - player_profile.name.width_cjk());
 
             let mut indent1 = String::from("");
@@ -308,8 +333,9 @@ pub async fn handle_leaderboard(ctx: Context<'_>) -> Result<String, crate::cmd::
             msg.push_str(
                 &MessageBuilder::new()
                     .push_line(format!(
-                        "{}\t   {}{}{}{}{}",
+                        "{}{}{}{}{}{}{}",
                         index + 1,
+                        indent0,
                         player_profile.name,
                         indent1,
                         player_profile.tp,
