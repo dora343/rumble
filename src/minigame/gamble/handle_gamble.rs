@@ -18,6 +18,7 @@ pub async fn handle_gamble(ctx: Context<'_>, bet: String) -> Result<String, crat
         select 
             u.id,
             u.tokens,
+            u.tp,
             s.play_count,
             u.rate,
             u.crit_rate,
@@ -145,6 +146,15 @@ pub async fn handle_gamble(ctx: Context<'_>, bet: String) -> Result<String, crat
                         }
                     }
 
+                    if result.tp != user.tp {
+                        msg = MessageBuilder::new()
+                            .push_line("Success!")
+                            .push_italic_line("Auto Compress activated.")
+                            .push_line(format!("You have **{}** TP. _(+{})_", result.tp, result.tp - user.tp))
+                            .push_line(format!("You have {} Tokens.", result.tokens_after))
+                            .build();
+                    }
+
                     Ok(msg)
                 }
             }
@@ -169,7 +179,7 @@ pub async fn handle_autorevive(data: &Data, user_id: UserId) -> Result<String, s
 
     match res {
         Some(auto_revive_info) => {
-            let res = sqlx::query(
+            sqlx::query(
                 r#"
                 update gamble.users
                 set 
@@ -204,9 +214,10 @@ pub async fn handle_leaderboard(ctx: Context<'_>) -> Result<String, crate::cmd::
         select 
             id,
             name,
+            tp,
             tokens
         from gamble.users
-        order by tokens desc;
+        order by tp desc, tokens desc;
         "#,
     )
     .fetch_all(&ctx.data().dbpool)
@@ -217,10 +228,17 @@ pub async fn handle_leaderboard(ctx: Context<'_>) -> Result<String, crate::cmd::
     }
 
     let max_name_len = std::cmp::max(6, res.iter().map(|x| x.name.len()).max().unwrap());
+    
+    let max_tp_len = std::cmp::max(2, res.iter().map(|x| x.tp.checked_ilog10().unwrap_or(0) + 1).max().unwrap());
+    
     let mut msg: String = String::from("Rank\tPlayer");
 
-    let title_indent_before_tokens = 4 + (max_name_len - 6);
+    let title_indent_before_tokens = 2 + (max_name_len - 6);
     for _ in 0..title_indent_before_tokens {
+        msg.push(' ');
+    }
+    msg.push_str("TP");
+    for _ in 0..(3 + max_tp_len - 2) {
         msg.push(' ');
     }
     msg.push_str("Tokens\n");
@@ -245,41 +263,57 @@ pub async fn handle_leaderboard(ctx: Context<'_>) -> Result<String, crate::cmd::
             .execute(&ctx.data().dbpool)
             .await?;
 
-            let indent_before_tokens: usize = 4 + (max_name_len - username.width_cjk());
+            let indent_before_tokens: usize = 2 + (max_name_len - username.width_cjk());
 
-            let mut indent = String::from("");
+            let mut indent1 = String::from("");
 
             for _ in 0..indent_before_tokens {
-                indent.push(' ');
+                indent1.push(' ');
+            }
+            
+            let indent_before_tp: u32 = 1 + (max_tp_len - player_profile.tp.checked_ilog10().unwrap_or(0) + 1);
+            let mut indent2 = String::from("");
+            for _ in 0..indent_before_tp {
+                indent2.push(' ');
             }
 
             msg.push_str(
                 &MessageBuilder::new()
                     .push_line(format!(
-                        "{}\t   {}{}{}",
+                        "{}\t   {}{}{}{}{}",
                         index + 1,
                         username,
-                        indent,
+                        indent1,
+                        player_profile.tp,
+                        indent2,
                         player_profile.tokens
                     ))
                     .build(),
             );
         } else {
-            let indent_before_tokens: usize = 4 + (max_name_len - player_profile.name.width_cjk());
+            let indent_before_tokens: usize = 2 + (max_name_len - player_profile.name.width_cjk());
 
-            let mut indent = String::from("");
+            let mut indent1 = String::from("");
 
             for _ in 0..indent_before_tokens {
-                indent.push(' ');
+                indent1.push(' ');
+            }
+            
+            let indent_before_tp: u32 = 1 + (max_tp_len - player_profile.tp.checked_ilog10().unwrap_or(0) + 1);
+            let mut indent2 = String::from("");
+            for _ in 0..indent_before_tp {
+                indent2.push(' ');
             }
 
             msg.push_str(
                 &MessageBuilder::new()
                     .push_line(format!(
-                        "{}\t   {}{}{}",
+                        "{}\t   {}{}{}{}{}",
                         index + 1,
                         player_profile.name,
-                        indent,
+                        indent1,
+                        player_profile.tp,
+                        indent2,
                         player_profile.tokens
                     ))
                     .build(),
@@ -298,6 +332,7 @@ pub async fn handle_statistics(ctx: Context<'_>) -> Result<String, crate::cmd::E
         r#"
         select 
             u.tokens,
+            u.tp,
             u.auto_revive,
             s.play_count,
             s.success_count,
@@ -323,6 +358,7 @@ pub async fn handle_statistics(ctx: Context<'_>) -> Result<String, crate::cmd::E
             .push_line("# Statistics")
             .push_line("```rust")
             .push_line(format!("                      Tokens: {}", stats.tokens))
+            .push_line(format!("                          TP: {}", stats.tp))
             .push_line(format!(
                 "                 Auto Revive: {}",
                 stats.auto_revive

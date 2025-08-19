@@ -3,7 +3,7 @@ use std::cmp::max;
 use chrono::Local;
 use rand::Rng;
 
-use crate::minigame::gamble::{User, DAILY_LOGIN_BUFF_RATE, MAX_RATE, MULTIPLIER_BASE};
+use crate::minigame::gamble::{User, COMPRESS_REWARD, COMPRESS_TRIGGER, DAILY_LOGIN_BUFF_RATE, MAX_RATE, MULTIPLIER_BASE};
 
 #[derive(Debug)]
 pub struct GambleResult {
@@ -29,6 +29,7 @@ pub struct GambleResult {
     max_successive_success: i32,
     max_successive_fail: i32,
     pub buff_remaining_rounds: i32,
+    pub tp: i64,
 }
 
 impl GambleResult {
@@ -36,11 +37,12 @@ impl GambleResult {
         sqlx::query(
             r#"
             update gamble.users
-            set tokens = $1
-            where id = $2
+            set tokens = $1, tp = $2
+            where id = $3
             "#,
         )
         .bind(self.tokens_after)
+        .bind(self.tp)
         .bind(self.user_id)
         .execute(dbpool)
         .await?;
@@ -158,8 +160,17 @@ pub fn gamble(user: User, bet: i64) -> GambleResult {
     };
 
     let differential = (bet as f64 * multiplier).round() as i64;
+    
+    let mut tp = user.tp;
 
-    let tokens_after = user.tokens + differential;
+    let tokens_after = if (user.tokens + differential) as i128 >= user.revive_tokens as i128 * COMPRESS_TRIGGER as i128 {
+        // auto compress triggered
+        tp = tp + COMPRESS_REWARD;
+        user.revive_tokens
+    } else {
+        user.tokens + differential
+    };
+
 
     let success_count = match gamble_success {
         true => user.success_count + 1,
@@ -220,7 +231,7 @@ pub fn gamble(user: User, bet: i64) -> GambleResult {
     if user.last_login.date_naive() != Local::now().date_naive() {
         buff_remaining_rounds = 0;
     }
-
+    
     GambleResult {
         user_id: user.id,
         success: gamble_success,
@@ -232,6 +243,7 @@ pub fn gamble(user: User, bet: i64) -> GambleResult {
         crit_rate: user.crit_rate,
         tokens_before: user.tokens,
         tokens_after,
+        tp,
         success_count,
         fail_count,
         successive_success,

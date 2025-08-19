@@ -15,6 +15,8 @@ const DEFAULT_AUTO_REVIVE: bool = false;
 
 const MAX_RATE: i16 = 10000;
 const MULTIPLIER_BASE: f64 = 10000.0;
+const COMPRESS_TRIGGER: i16 = 1024;
+const COMPRESS_REWARD: i64 = 10;
 
 const DAILY_LOGIN_BUFF_RATE: i16 = 8000; // 80%
 const MIN_LOGIN_BUFF_ROUNDS: i32 = 3;
@@ -24,6 +26,7 @@ const MAX_LOGIN_BUFF_ROUNDS: i32 = 5;
 pub struct User {
     id: i64,
     tokens: i64,
+    tp: i64,
     play_count: i32,
     rate: i16,
     crit_rate: i16,
@@ -55,12 +58,14 @@ struct AutoReviveInfo {
 struct LeaderboardProfile {
     id: i64,
     name: String,
+    tp: i64,
     tokens: i64,
 }
 
 #[derive(sqlx::FromRow, Debug)]
 struct Statistics {
     tokens: i64,
+    tp: i64,
     auto_revive: bool,
     play_count: i32,
     success_count: i32,

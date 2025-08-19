@@ -36,7 +36,7 @@ pub async fn handle_revive(ctx: Context<'_>, user_id: UserId) -> Result<String, 
 
         Some(revive_info) => match revive_info.tokens {
             0 => {
-                let res = sqlx::query(
+                sqlx::query(
                     r#"
                     update gamble.users
                     set 
@@ -49,7 +49,7 @@ pub async fn handle_revive(ctx: Context<'_>, user_id: UserId) -> Result<String, 
                 .execute(&ctx.data().dbpool)
                 .await?;
 
-                let res = sqlx::query(
+                sqlx::query(
                     r#"
                     update gamble.user_stat
                     set 
